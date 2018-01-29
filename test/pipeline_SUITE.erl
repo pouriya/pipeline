@@ -46,7 +46,8 @@
         ,'5'/1
         ,'6'/1
         ,'7'/1
-        ,'8'/1]).
+        ,'8'/1
+        ,'9'/1]).
 
 -define(test, ?pipeline('atom', is_atom())).
 
@@ -156,3 +157,29 @@ end_per_testcase(_TestCase, _Config) ->
 
 '8'(_Cfg) ->
     ((((?test)))).
+
+
+'9'(_Cfg) ->
+    self() ! msg,
+    receive
+        msg ->
+            _ = ?test
+    end,
+    Ref = erlang:make_ref(),
+    receive
+        Ref ->
+            _ = ?test
+    after 0 ->
+        _ = ?test
+    end,
+    self() ! Ref,
+    receive
+        Ref ->
+            _ = ?test
+    after 0 ->
+        _ = ?test
+    end,
+    receive
+    after 0 ->
+        _ = ?test
+    end.
