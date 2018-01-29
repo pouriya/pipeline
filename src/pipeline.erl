@@ -31,7 +31,7 @@
 %%% POSSIBILITY OF SUCH DAMAGE.
 %%% ------------------------------------------------------------------------------------------------
 %% @author   Pouriya Jahanbakhsh <pouriya.jahanbakhsh@gmail.com>
-%% @version  0.0.1
+%% @version  18.1.30
 %% @doc
 %%           Erlang pipeline syntax compiler.
 %% @end

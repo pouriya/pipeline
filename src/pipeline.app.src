@@ -1,7 +1,7 @@
 {application
 ,pipeline
 ,[{description, "Pipeline syntax compiler"}
- ,{vsn, "0.0.1"}
+ ,{vsn, "18.1.30"}
  ,{applications, [kernel, stdlib]}
  ,{modules, [pipeline]}
  ,{maintainers, ["pouriya.jahanbakhsh@gmail.com"]}
