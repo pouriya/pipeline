@@ -122,6 +122,15 @@ replace_3([Expr|Body], Body2) ->
                 erl_syntax:block_expr(replace_3(erl_syntax:block_expr_body(Expr), []));
             parentheses ->
                 erl_syntax:parentheses(replace_3(erl_syntax:parentheses_body(Expr), []));
+            receive_expr ->
+                RecvClauses = replace_2(erl_syntax:receive_expr_clauses(Expr), []),
+                case erl_syntax:receive_expr_timeout(Expr) of
+                    none ->
+                        erl_syntax:receive_expr(RecvClauses);
+                    Timeout ->
+                        RecvActions = replace_3(erl_syntax:receive_expr_action(Expr), []),
+                        erl_syntax:receive_expr(RecvClauses, Timeout, RecvActions)
+                end;
             _ ->
                 Expr
         end,
