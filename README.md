@@ -1,5 +1,5 @@
 # `pipeline`
-By using this library you can pass the result of an expression `A` as one parameter of another expression `B` and pass result of `B` as one parameter of `C` and so on. Isntead of writing:
+By using this library you can pass result of an expression `A` as one parameter of another expression `B` and pass result of `B` as one parameter of `C` and so on. It's usefull in function call chaining. Isntead of writing:
 ```erlang
 foo(bar(baz(new_function(other_function()))))
 ```
@@ -58,7 +58,7 @@ Runnning above codes:
 -module(test).
 
 %% Don't forget to include pipeline header file for using ?pipeline macro and compile code correctly
--include("include/pipeline.hrl").
+-include_lib("pipeline/include/pipeline.hrl").
 
 
 -export([print_hello_world/0
@@ -149,3 +149,11 @@ ok
 11> test:test_case().
 10.0
 ```
+You can use this macro in `case`, `if`, `begin`, `try`, `receive`, argument of other function or call, body of fun. **Don't** use as element of tuple (also record), list or map.
+
+### License
+**`BSD 3-Clause`**
+
+
+### Author
+**`pouriya.jahanbakhsh@gmail.com`**
