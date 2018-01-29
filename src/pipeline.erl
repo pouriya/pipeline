@@ -107,14 +107,10 @@ replace_4([Item | Items], Calls) ->
                                                                 ,{reason, Rsn}]})
                             end;
                         {atom, _} -> % It's {Operator:: '++', '!', ..., _}
-                            case operator_call(erl_syntax:atom_value(Item2)
-                                              ,Item3
-                                              ,erl_syntax:get_pos(Item2)) of
-                                {ok, Call} ->
-                                    replace_4(Items, [{Call, 1}|Calls]);
-                                {error, _}=Err ->
-                                    Err
-                            end;
+                            Call = operator_call(erl_syntax:atom_value(Item2)
+                                                ,Item3
+                                                ,erl_syntax:get_pos(Item2)),
+                            replace_4(Items, [{Call, 1}|Calls]);
                         _ ->
                             Rsn = erlang:list_to_atom("Two membered Tuple argument should contain a"
                                                       " fun or function call and an integer or an o"
@@ -130,21 +126,17 @@ replace_4([Item | Items], Calls) ->
                             Side = erl_syntax:atom_value(Item3),
                             if
                                 Side == left orelse Side == right ->
-                                    case operator_call(erl_syntax:atom_value(Item2)
-                                                      ,Item4
-                                                      ,erl_syntax:get_pos(Item2)) of
-                                        {ok, Call} ->
-                                            Side2 =
-                                                case Side of
-                                                    right ->
-                                                        1;
-                                                    _ ->
-                                                        2
-                                                end,
-                                            replace_4(Items, [{Call, Side2}|Calls]);
-                                        {error, _}=Err ->
-                                            Err
-                                    end;
+                                    Call = operator_call(erl_syntax:atom_value(Item2)
+                                                        ,Item4
+                                                        ,erl_syntax:get_pos(Item2)),
+                                    Side2 =
+                                        case Side of
+                                            right ->
+                                                1;
+                                            _ ->
+                                                2
+                                        end,
+                                    replace_4(Items, [{Call, Side2}|Calls]);
                                 true ->
                                     Rsn = erlang:list_to_atom("Three membered Tuple argument should"
                                                               " contain an operator atom ('++', '!'"
@@ -241,9 +233,9 @@ operator_call(Operator, Expr, Pos) when Operator =:= '++' orelse
                                         Operator =:= 'bsl' orelse
                                         Operator =:= 'bsr' ->
 
-    {ok, revert(erl_syntax:application(erl_syntax:atom('erlang')
-                                      ,erl_syntax:atom(Operator)
-                                      ,[Expr])
-               ,Pos)};
-operator_call(_, _, _) ->
-    error.
+    revert(erl_syntax:application(erl_syntax:atom('erlang'), erl_syntax:atom(Operator), [Expr])
+          ,Pos);
+operator_call(Other, _, Pos) ->
+    erlang:error({syntax_error, [{line, Pos}
+                                ,{reason, 'Could not found valid erlang operator'}
+                                ,{detected, Other}]}).
