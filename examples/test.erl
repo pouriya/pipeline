@@ -1,7 +1,7 @@
 -module(test).
 
 %% Don't forget to include pipeline header file for using ?pipeline macro and compile code correctly
--include("include/pipeline.hrl").
+-include_lib("pipeline/include/pipeline.hrl").
 
 
 -export([print_hello_world/0
