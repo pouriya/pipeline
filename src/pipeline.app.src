@@ -1,0 +1,9 @@
+{application
+,pipeline
+,[{description, "Pipeline syntax compiler"}
+ ,{vsn, "0.0.1"}
+ ,{applications, [kernel, stdlib]}
+ ,{modules, [pipeline]}
+ ,{maintainers, ["pouriya.jahanbakhsh@gmail.com"]}
+ ,{licenses, ["BSD 3-Clause"]}
+ ,{links, [{"GitHub", "https://github.com/pouriya-jahanbakhsh/pipeline"}]}]}.

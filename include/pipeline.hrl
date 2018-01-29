@@ -1,0 +1,2 @@
+-compile({parse_transform, pipeline}).
+-define(pipeline, pipeline:pipeline).
