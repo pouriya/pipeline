@@ -151,7 +151,7 @@ ok
 11> test:test_case().
 10.0
 ```
-You can use this macro in `case`, `if`, `begin`, `try`, `receive`, argument of other function or call, body of fun. **Don't** use as element of tuple (also record), list or map.
+You can use this macro in blocks (`case`, `if`, `begin`, `try` and `receive`), argument of other function or fun call, body of fun. **Don't** use as element of tuple (also record), list or map.
 
 ### License
 **`BSD 3-Clause`**
