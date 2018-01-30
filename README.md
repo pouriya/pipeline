@@ -1,4 +1,4 @@
-![pipeline travis test status](https://travis-ci.org/Pouriya-Jahanbakhsh/pipeline.png?branch=master) [![Hex version](https://img.shields.io/hexpm/v/director.svg "Hex version")](https://hex.pm/packages/pl)
+![pipeline travis test status](https://travis-ci.org/Pouriya-Jahanbakhsh/pipeline.png?branch=master) [![Hex version](https://img.shields.io/hexpm/v/pl.svg "Hex version")](https://hex.pm/packages/pl)
 
 # `pipeline`
 By using this library you can pass result of an expression `A` as one parameter of another expression `B` and pass result of `B` as one parameter of `C` and so on. It's usefull in function call chaining. Isntead of writing:
