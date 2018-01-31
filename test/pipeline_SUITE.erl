@@ -80,6 +80,8 @@ end_per_testcase(_TestCase, _Config) ->
     foo = {foo} -- element(1, ?arg),
     foo = 1 -- element(?arg, {foo}),
 
+    "foo" = "f" ++  {"oo"} -- element(1),
+    {"foo"} = {"foobar" -- "bar"},
 
 %%  is_boolean(is_integer(element(2, {foo, 1}))),
     true = {foo, 1} -- element(2) -- is_integer() -- is_boolean(),
