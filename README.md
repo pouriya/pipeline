@@ -156,6 +156,8 @@ Erlang/OTP 19 [erts-8.3] [source] [64-bit] [smp:8:8] [async-threads:0] [hipe] [k
 Eshell V8.3  (abort with ^G)
 
 1> c(test).
+```
+```txt
 Processing expression "Hello, world!\n" -- string:to_upper() -- io:format() in line 15
 New call io:format(string:to_upper("Hello, world!\n")) generated
 
@@ -204,7 +206,8 @@ New call erlang:'div'(erlang:'+'(erlang:'*'(erlang:'+'(erlang:'*'(MegaSec,
                                    1000000),
                         MicroSec),
              1000) generated
-
+```
+```erlang
 {ok,test}
 2>
 ```
