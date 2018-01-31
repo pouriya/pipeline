@@ -49,7 +49,7 @@
         ,'8'/1
         ,'9'/1]).
 
--define(test, ?pipeline('atom', is_atom())).
+-define(test, ?pipeline('atom' -- is_atom())).
 
 
 all() ->
@@ -77,30 +77,30 @@ end_per_testcase(_TestCase, _Config) ->
     _ = ?test,
 
 %%  foo = element(1, {foo}),
-    foo = ?pipeline({foo}, element(1)),
-    foo = ?pipeline({foo}, {element(1), 2}),
-    foo = ?pipeline(1, {element({foo}), 1}),
+    foo = ?pipeline({foo} -- element(1)),
+    foo = ?pipeline({foo} -- {element(1), 2}),
+    foo = ?pipeline(1 -- {element({foo}), 1}),
 
 
 %%  is_boolean(is_integer(element(2, {foo, 1}))),
-    true = ?pipeline({foo, 1}, element(2), is_integer(), is_boolean()),
+    true = ?pipeline({foo, 1} -- element(2) -- is_integer() -- is_boolean()),
 
 %%  string:to_upper(element(2, lists:split(7, "Hello, world!")) -- "!"),
     "WORLD" = ?pipeline("Hello, world!"
-                       ,lists:split(7)
-                       ,element(2)
-                       ,{'--', "!"}
-                       ,string:to_upper()),
+                        -- lists:split(7)
+                        -- element(2)
+                        -- {'--', "!"}
+                        -- string:to_upper()),
 
 %%  1 / 10,
-    0.1 = ?pipeline(1, {'/', 10}),
-    0.1 = ?pipeline(1, {'/', right, 10}),
+    0.1 = ?pipeline(1 -- {'/', 10}),
+    0.1 = ?pipeline(1 -- {'/', right, 10}),
 
 %%  10 / 1,
-    10.0 = ?pipeline(1, {'/', left, 10}),
+    10.0 = ?pipeline(1 -- {'/', left, 10}),
 
 %%  lists:keyreplace(age,  1, [{age, 2}], {age, 2}),
-    [{age, 1}] = ?pipeline([{age, 2}], {lists:keyreplace(age, 1, {age, 1}), 3}),
+    [{age, 1}] = ?pipeline([{age, 2}] -- {lists:keyreplace(age, 1, {age, 1}), 3}),
 
     ok.
 
@@ -146,7 +146,7 @@ end_per_testcase(_TestCase, _Config) ->
 
 
 '6'(_Cfg) ->
-    io:format(?pipeline(test, atom_to_list())).
+    io:format(?pipeline(test -- atom_to_list())).
 
 
 '7'(_cfg) ->
