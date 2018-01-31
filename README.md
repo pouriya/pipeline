@@ -9,6 +9,7 @@ Use erlang operator `--` for pipelining and Just write:
 ```erlang
 other_function() -- new_function() -- baz() -- bar() -- foo().
 ```
+If you want to use operator `--` with its default usage, just put that in parentheses.  
 By default result of every expression passes as last argument of next expression. Except first argument that can be anything, other arguments should be one of the following:
 * A function call (`Mod:Func(Args)` or `Func(Args)`).  
     ```erlang
@@ -136,7 +137,7 @@ ok
 10> test:timestamp().  
 1517264504646
 ```
-You can use this macro in blocks (`case`, `if`, `begin`, `try` and `receive`), argument of other function or fun call, body of fun. **Don't** use as element of tuple (also record), list or map and always test the code that includes pipeline's header file.
+You can use this macro in blocks (`case`, `if`, `begin`, `try` and `receive`), argument of other function or fun call, body of fun. **Don't** use as element of tuple (also record), list or map and **always test the code that includes pipeline's header file**.
 
 ### License
 **`BSD 3-Clause`**
