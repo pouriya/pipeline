@@ -59,7 +59,6 @@ parse_transform(AST, _Opts) ->
 %% Internal functions:
 
 replace([Item|AST], AST2) ->
-%%    io:format("Item: ~tp~n", [Item]),
     Item2 =
         case erl_syntax:type(Item) of
             function ->
