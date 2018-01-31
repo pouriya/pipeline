@@ -59,6 +59,7 @@ parse_transform(AST, _Opts) ->
 %% Internal functions:
 
 replace([Item|AST], AST2) ->
+%%    io:format("Item: ~tp~n", [Item]),
     Item2 =
         case erl_syntax:type(Item) of
             function ->
@@ -86,17 +87,29 @@ replace_2([], Clauses2) ->
 replace_3([Expr|Body], Body2) ->
     Expr2 =
         case erl_syntax:type(Expr) of
-            application ->
-                case erl_syntax_lib:analyze_application(Expr) of
-                    {?MODULE, {?MODULE, 1}} ->
-                        debug("Processing expression ~tp in line ~tp\n", [lists:flatten(erl_pp:expr(Expr)), erl_syntax:get_pos(Expr)]),
-                        [Arg] = erl_syntax:application_arguments(Expr),
-                        replace_4(calls(Arg, []), []);
-                    _ ->
-                        CallOperator = erl_syntax:application_operator(Expr),
-                        CallArgs = replace_3(erl_syntax:application_arguments(Expr), []),
-                        erl_syntax:application(CallOperator, CallArgs)
+            infix_expr ->
+                Operator = erl_syntax:infix_expr_operator(Expr),
+                case erl_syntax:type(Operator) of
+                    operator ->
+                        case erl_syntax:operator_name(Operator) of
+                            ?OPERATOR ->
+                                debug("Processing expression ~ts in line ~tp\n"
+                                     ,[lists:flatten(erl_pp:expr(Expr)), erl_syntax:get_pos(Expr)]),
+                                replace_4(calls(erl_syntax:infix_expr_right(Expr)
+                                               ,[erl_syntax:infix_expr_left(Expr)])
+                                         ,[]);
+                            _ ->
+                                {[Left], [Right]} = {replace_3([erl_syntax:infix_expr_left(Expr)]
+                                                              ,[])
+                                                    ,replace_3([erl_syntax:infix_expr_right(Expr)]
+                                                              ,[])},
+                                erl_syntax:infix_expr(Left, Operator, Right)
+                        end
                 end;
+            application ->
+                CallOperator = erl_syntax:application_operator(Expr),
+                CallArgs = replace_3(erl_syntax:application_arguments(Expr), []),
+                erl_syntax:application(CallOperator, CallArgs);
             match_expr ->
                 erl_syntax:match_expr(erl_syntax:match_expr_pattern(Expr)
                                      ,erlang:hd(replace_3([erl_syntax:match_expr_body(Expr)], [])));
@@ -141,78 +154,29 @@ replace_4([Item|Items], []) -> % First element of pipeline:pipeline/1-256 can be
 replace_4([Item | Items], Calls) ->
     case erl_syntax:type(Item) of
         application ->
-            replace_4(Items, [{Item, 0}|Calls]);
-        tuple ->
-            TupleElems = erl_syntax:tuple_elements(Item),
-            case erlang:length(TupleElems) of
-                2 ->
-                    [Item2, Item3] = TupleElems,
-                    case {erl_syntax:type(Item2), erl_syntax:type(Item3)} of
-                        {application, integer} -> % It's {M:F(...)|F(...), 0...256}
-                            Int = erl_syntax:integer_value(Item3),
-                            ArgCount = erlang:length(erl_syntax:application_arguments(Item2)),
-                            case Int == 0 orelse Int =< ArgCount + 1 of
-                                true ->
-                                    replace_4(Items, [{Item2, Int}|Calls]);
-                                _ ->
-                                    Rsn = erlang:list_to_atom("Argument index should be 0 or equal "
-                                                              "to call arguments plus one"),
-                                    erlang:error({syntax_error, [{line, erl_syntax:get_pos(Item3)}
-                                                                ,{reason, Rsn}]})
-                            end;
-                        {atom, _} -> % It's {Operator:: '++', '!', ..., _}
-                            Call = operator_call(erl_syntax:atom_value(Item2)
-                                                ,Item3
-                                                ,erl_syntax:get_pos(Item2)),
-                            replace_4(Items, [{Call, 1}|Calls]);
-                        _ ->
-                            Rsn = erlang:list_to_atom("Two membered Tuple argument should contain a"
-                                                      " fun or function call and an integer or an o"
-                                                      "perator atom ('++', '!', etc) and an express"
-                                                      "ion"),
-                            erlang:error({syntax_error, [{line, erl_syntax:get_pos(Item)}
-                                                        ,{reason, Rsn}]})
-                    end;
-                3 -> %% It's {Operator:: '++', '!', ..., right|left, _}
-                    [Item2, Item3, Item4] = TupleElems,
-                    case {erl_syntax:type(Item2), erl_syntax:type(Item3)} of
-                        {atom, atom} ->
-                            Side = erl_syntax:atom_value(Item3),
-                            if
-                                Side == left orelse Side == right ->
-                                    Call = operator_call(erl_syntax:atom_value(Item2)
-                                                        ,Item4
-                                                        ,erl_syntax:get_pos(Item2)),
-                                    Side2 =
-                                        case Side of
-                                            right ->
-                                                1;
-                                            _ ->
-                                                2
-                                        end,
-                                    replace_4(Items, [{Call, Side2}|Calls]);
-                                true ->
-                                    Rsn = erlang:list_to_atom("Three membered Tuple argument should"
-                                                              " contain an operator atom ('++', '!'"
-                                                              ", etc) and 'left' or 'right' and an "
-                                                              "expression"),
-                                    erlang:error({syntax_error, [{line, erl_syntax:get_pos(Item)}
-                                                                ,{reason, Rsn}]})
-                            end;
-                        _ ->
-                            Rsn = erlang:list_to_atom("Three membered Tuple argument should contain"
-                                                      " an operator atom ('++', '!', etc) and 'left"
-                                                      "' or 'right' and an expression"),
-                            erlang:error({syntax_error, [{line, erl_syntax:get_pos(Item)}
-                                                        ,{reason, Rsn}]})
-                    end;
-                _ ->
-                    Rsn = 'Tuple arguments can contains two or three elements',
-                    erlang:error({syntax_error, [{line, erl_syntax:get_pos(Item)}, {reason, Rsn}]})
+            replace_4(Items, [Item|Calls]);
+        infix_expr ->
+            Operator = erl_syntax:infix_expr_operator(Item),
+            case erl_syntax:type(Operator) of
+                operator ->
+                    {Left, Right} = {erl_syntax:infix_expr_left(Item)
+                                    ,erl_syntax:infix_expr_right(Item)},
+                    Call = operator_call(erl_syntax:operator_name(Operator)
+                                        ,[Left, Right]
+                                        ,erl_syntax:get_pos(Item)),
+                    replace_4(Items, [Call|Calls]);
+                Other ->
+                    Rsn = erlang:list_to_atom("An argument should be a fun or function call or oper"
+                                              "ation in parentheses with at least one ?arg macro in"
+                                              " left or right of operator"),
+                    erlang:error({syntax_error, [{line, erl_syntax:get_pos(Item)}
+                                                ,{reason, Rsn}
+                                                ,{detected, Other}]})
             end;
         Other ->
-            Rsn = erlang:list_to_atom("An argument should be two or three membered tuple or a fun c"
-                                      "all or a function call (Except first argument)"),
+            Rsn = erlang:list_to_atom("An argument should be a fun or function call or operation in"
+                                      " parentheses with at least one ?arg macro inleft or right of"
+                                      " operator"),
             erlang:error({syntax_error, [{line, erl_syntax:get_pos(Item)}
                                         ,{reason, Rsn}
                                         ,{detected, Other}]})
@@ -220,15 +184,15 @@ replace_4([Item | Items], Calls) ->
 replace_4([], Calls) ->
     Calls2 = lists:reverse(Calls),
     Fold =
-        fun({Call, Index}, Call3) ->
+        fun(Call, Call3) ->
             AppOperator = erl_syntax:application_operator(Call),
             AppArgs = erl_syntax:application_arguments(Call),
-            Call4 = erl_syntax:application(AppOperator, add_arg(Call3, Index, AppArgs)),
+            Call4 = erl_syntax:application(AppOperator, add_arg(Call3, AppArgs, [], false)),
             revert(Call4, erl_syntax:get_pos(Call))
         end,
     [Call|Calls3] = Calls2,
     Ret = lists:foldl(Fold, Call, Calls3),
-    debug("New call \"~ts\" generated\n\n", [lists:flatten(erl_pp:expr(Ret))]),
+    debug("New call ~ts generated\n\n", [lists:flatten(erl_pp:expr(Ret))]),
     Ret.
 
 
@@ -249,17 +213,20 @@ debug(Txt, Args) ->
             io:format(Txt, Args)
     end.
 
+add_arg(Call, [Arg|Args], Args2, Added) ->
+    case is_argument_call(Arg) of
+        true ->
+            add_arg(Call, Args, [Call|Args2], true);
+        _ ->
+            add_arg(Call, Args, [Arg|Args2], Added)
+    end;
+add_arg(Call, [], Args2, false) ->
+    lists:reverse([Call|Args2]);
+add_arg(_, [], Args2, _) ->
+    lists:reverse(Args2).
 
-add_arg(Call, 1, Args) ->
-    [Call|Args];
-add_arg(Call, Index, Args) when Index =:= 0 orelse Index =:= erlang:length(Args) + 1 ->
-    Args ++ [Call];
-add_arg(Call, Index, Args) ->
-    {Left, Right} = lists:split(Index-1, Args),
-    Left ++ [Call] ++ Right.
 
-
-operator_call(Operator, Expr, Pos) when Operator =:= '++' orelse
+operator_call(Operator, Args, Pos) when Operator =:= '++' orelse
                                         Operator =:= '--' orelse
                                         Operator =:= '+' orelse
                                         Operator =:= '-' orelse
@@ -286,9 +253,27 @@ operator_call(Operator, Expr, Pos) when Operator =:= '++' orelse
                                         Operator =:= 'bxor' orelse
                                         Operator =:= 'bsl' orelse
                                         Operator =:= 'bsr' ->
-
-    revert(erl_syntax:application(erl_syntax:atom('erlang'), erl_syntax:atom(Operator), [Expr])
-          ,Pos);
+    [Left, Right] = Args,
+    Check =
+        case {is_argument_call(Left), is_argument_call(Right)} of
+            {true, _} ->
+                ok;
+            {_, true} ->
+                ok;
+            _ ->
+                error
+        end,
+    case Check of
+        ok ->
+            revert(erl_syntax:application(erl_syntax:atom('erlang')
+                                         ,erl_syntax:atom(Operator)
+                                         ,Args)
+                  ,Pos);
+        error ->
+            erlang:error({syntax_error
+                         ,[{line, Pos}
+                          ,{reason, 'At least one arguemnt of operator should be ?arg macro'}]})
+    end;
 operator_call(Other, _, Pos) ->
     erlang:error({syntax_error, [{line, Pos}
                                 ,{reason, 'Could not found valid erlang operator'}
@@ -298,8 +283,8 @@ operator_call(Other, _, Pos) ->
 calls(Expr, Calls) ->
     case erl_syntax:type(Expr) of
         infix_expr ->
-            [Left] = replace_3([erl_syntax:infix_expr_left(Expr)], []),
-            [Right] = replace_3([erl_syntax:infix_expr_right(Expr)], []),
+            Left = erl_syntax:infix_expr_left(Expr),
+            Right = erl_syntax:infix_expr_right(Expr),
             Operator = erl_syntax:infix_expr_operator(Expr),
             case erl_syntax:type(Operator) of
                 operator ->
@@ -315,4 +300,18 @@ calls(Expr, Calls) ->
         _ ->
             Calls ++ [Expr]
 
+    end.
+
+
+is_argument_call(Expr) ->
+    case erl_syntax:type(Expr) of
+        application ->
+            case erl_syntax_lib:analyze_application(Expr) of
+                {?MODULE, {argument, 0}} ->
+                    true;
+                _ ->
+                    fasle
+            end;
+        _ ->
+            fasle
     end.
