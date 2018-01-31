@@ -45,6 +45,11 @@
 -export([parse_transform/2]).
 
 %% -------------------------------------------------------------------------------------------------
+%% Records & Macros & Includes:
+
+-define(OPERATOR, '--').
+
+%% -------------------------------------------------------------------------------------------------
 %% compiler callback:
 
 parse_transform(AST, _Opts) ->
@@ -83,18 +88,10 @@ replace_3([Expr|Body], Body2) ->
         case erl_syntax:type(Expr) of
             application ->
                 case erl_syntax_lib:analyze_application(Expr) of
-                    {?MODULE, {?MODULE, _}} -> % found pipeline:pipeline(...
-                        debug("processing \"~ts\"\n", [lists:flatten(erl_pp:expr(Expr))]),
-                        CallArgs = erl_syntax:application_arguments(Expr),
-                        CallArgs2 = replace_3(CallArgs, []),
-                        case erlang:length(CallArgs2) of
-                            0 ->
-                                Rsn = 'Pipeline should has at least one argument',
-                                erlang:error({syntax_error, [{line, erl_syntax:get_pos(Expr)}
-                                                            ,{reason, Rsn}]});
-                            _ ->
-                                replace_4(CallArgs2, [])
-                        end;
+                    {?MODULE, {?MODULE, 1}} ->
+                        debug("Processing expression ~tp in line ~tp\n", [lists:flatten(erl_pp:expr(Expr)), erl_syntax:get_pos(Expr)]),
+                        [Arg] = erl_syntax:application_arguments(Expr),
+                        replace_4(calls(Arg, []), []);
                     _ ->
                         CallOperator = erl_syntax:application_operator(Expr),
                         CallArgs = replace_3(erl_syntax:application_arguments(Expr), []),
@@ -296,3 +293,26 @@ operator_call(Other, _, Pos) ->
     erlang:error({syntax_error, [{line, Pos}
                                 ,{reason, 'Could not found valid erlang operator'}
                                 ,{detected, Other}]}).
+
+
+calls(Expr, Calls) ->
+    case erl_syntax:type(Expr) of
+        infix_expr ->
+            [Left] = replace_3([erl_syntax:infix_expr_left(Expr)], []),
+            [Right] = replace_3([erl_syntax:infix_expr_right(Expr)], []),
+            Operator = erl_syntax:infix_expr_operator(Expr),
+            case erl_syntax:type(Operator) of
+                operator ->
+                    case erl_syntax:operator_name(Operator) of
+                        ?OPERATOR ->
+                            Calls ++ calls(Right, [Left]);
+                        _ ->
+                            Calls ++ [Expr]
+                    end;
+                _ ->
+                    Calls ++ [Expr]
+            end;
+        _ ->
+            Calls ++ [Expr]
+
+    end.
