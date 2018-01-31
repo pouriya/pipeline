@@ -130,8 +130,6 @@ replace_3([Expr|Body], Body2) ->
                 erl_syntax:fun_expr(replace_2(erl_syntax:fun_expr_clauses(Expr), []));
             block_expr ->
                 erl_syntax:block_expr(replace_3(erl_syntax:block_expr_body(Expr), []));
-            parentheses ->
-                erl_syntax:parentheses(replace_3(erl_syntax:parentheses_body(Expr), []));
             receive_expr ->
                 RecvClauses = replace_2(erl_syntax:receive_expr_clauses(Expr), []),
                 case erl_syntax:receive_expr_timeout(Expr) of
