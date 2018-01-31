@@ -9,7 +9,6 @@ Use erlang operator `--` for pipelining and Just write:
 ```erlang
 other_function() -- new_function() -- baz() -- bar() -- foo().
 ```
-If you want to use operator `--` with its default usage, just put that in parentheses.  
 By default result of every expression passes as last argument of next expression. Except first argument that can be anything, other arguments should be one of the following:
 * A function call (`Mod:Func(Args)` or `Func(Args)`).  
     ```erlang
@@ -137,7 +136,78 @@ ok
 10> test:timestamp().  
 1517264504646
 ```
-You can use this macro in blocks (`case`, `if`, `begin`, `try` and `receive`), argument of other function or fun call, body of fun. **Don't** use as element of tuple (also record), list or map and **always test the code that includes pipeline's header file**.
+
+You can use this macro in blocks (`case`, `if`, `begin`, `try` and `receive`), argument of other function or fun call, body of fun. **Don't** use as element of tuple (also record), list or map. Then If you want to use operator `--` with its default usage, just put that in one membered tuple or list. for example:
+```erlang
+{"foo"} = {"foobar" -- "bar"},  
+```
+**always test the code that includes pipeline's header file**.
+
+## Debug
+If you want to see processing and replaced expression, export `ERL_PIPELINE_DEBUG` and then compile the code:
+```sh
+~/projects/pipeline $ export ERL_PIPELINE_DEBUG=1
+~/projects/pipeline $ rebar3 shell
+```
+```erlang
+===> Verifying dependencies...
+===> Compiling pipeline
+Erlang/OTP 19 [erts-8.3] [source] [64-bit] [smp:8:8] [async-threads:0] [hipe] [kernel-poll:false]
+Eshell V8.3  (abort with ^G)
+
+1> c(test).
+Processing expression "Hello, world!\n" -- string:to_upper() -- io:format() in line 15
+New call io:format(string:to_upper("Hello, world!\n")) generated
+
+Processing expression Opts
+--
+Replace(name, Name) -- Replace(age, Age) -- Replace(location, Location) in line 23
+New call Replace(location,
+        Location,
+        Replace(age, Age, Replace(name, Name, Opts))) generated
+
+Processing expression SupRef
+--
+supervisor:which_children() -- lists:keyfind(ChildId, 1) -- Terminate() in line 34
+New call Terminate(lists:keyfind(ChildId, 1, supervisor:which_children(SupRef))) generated
+
+Processing expression Opts
+--
+lists:keyreplace(name, 1, pipeline:argument(), {name,Name})
+--
+lists:keyreplace(age, 1, pipeline:argument(), {age,Age})
+--
+lists:keyreplace(location, 1, pipeline:argument(), {location,Location}) in line 38
+New call lists:keyreplace(location,
+                 1,
+                 lists:keyreplace(age,
+                                  1,
+                                  lists:keyreplace(name,
+                                                   1,
+                                                   Opts,
+                                                   {name,Name}),
+                                  {age,Age}),
+                 {location,Location}) generated
+
+Processing expression MegaSec
+--
+pipeline:argument() * 1000000
+--
+pipeline:argument() + Sec
+--
+pipeline:argument() * 1000000
+--
+pipeline:argument() + MicroSec -- pipeline:argument() div 1000 in line 46
+New call erlang:'div'(erlang:'+'(erlang:'*'(erlang:'+'(erlang:'*'(MegaSec,
+                                                         1000000),
+                                              Sec),
+                                   1000000),
+                        MicroSec),
+             1000) generated
+
+{ok,test}
+2>
+```
 
 ### License
 **`BSD 3-Clause`**
