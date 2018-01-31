@@ -9,7 +9,7 @@ Use erlang operator `--` for pipelining and Just write:
 ```erlang
 other_function() -- new_function() -- baz() -- bar() -- foo().
 ```
-By default result of every expression passes as last argument of next expression. Except first argument that can be anything, other arguments of `?pipeline` macro should be one of the following:
+By default result of every expression passes as last argument of next expression. Except first argument that can be anything, other arguments should be one of the following:
 * A function call (`Mod:Func(Args)` or `Func(Args)`).  
     ```erlang
     "Hello, world!\n" -- string:to_upper() -- io:format()
@@ -48,10 +48,6 @@ By default result of every expression passes as last argument of next expression
     %% Example of wrapping timestamp in milli-seconds
     {MegaSec, Sec, MicroSec} = os:timestamp(),
     MegaSec -- (?arg * 1000000) -- (?arg + Sec) -- (?arg * 1000000) -- (?arg + MicroSec) -- (?arg div 1000).
-    
-    %% Example of using two ?arg in one parentheses
-    print_square_area(#suqare_info{side_size = Int}) ->
-		Int -- (?arg * ?arg) -- io:format("Area is ~p~n", [?arg])
     ```
 # Example
 Runnning above codes:
