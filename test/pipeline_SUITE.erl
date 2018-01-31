@@ -46,8 +46,7 @@
         ,'5'/1
         ,'6'/1
         ,'7'/1
-        ,'8'/1
-        ,'9'/1]).
+        ,'8'/1]).
 
 -define(test, 'atom' -- is_atom()).
 
@@ -151,10 +150,6 @@ end_per_testcase(_TestCase, _Config) ->
 
 
 '8'(_Cfg) ->
-    ((((?test)))).
-
-
-'9'(_Cfg) ->
     self() ! msg,
     receive
         msg ->
