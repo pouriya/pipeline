@@ -8,12 +8,11 @@
         ,replace/4
         ,terminate/2
         ,replace2/4
-        ,timestamp/0
-        ,test_case/0]).
+        ,timestamp/0]).
 
 
 print_hello_world() ->
-    ?pipeline("Hello, world!\n", string:to_upper(), io:format()).
+    "Hello, world!\n" -- string:to_upper() -- io:format().
 
 
 replace(Name, Age, Location, Opts) ->
@@ -21,7 +20,7 @@ replace(Name, Age, Location, Opts) ->
         fun(Key, Val, Opts2) ->
             lists:keyreplace(Key, 1, Opts2, {Key, Val})
         end,
-    ?pipeline(Opts, Replace(name, Name), Replace(age, Age), Replace(location, Location)).
+    Opts -- Replace(name, Name) -- Replace(age, Age) -- Replace(location, Location).
 
 
 terminate(SupRef, ChildId) ->
@@ -32,22 +31,16 @@ terminate(SupRef, ChildId) ->
             (_) ->
                 ok
         end,
-    ?pipeline(SupRef, supervisor:which_children(), lists:keyfind(ChildId, 1), Terminate()).
+    SupRef -- supervisor:which_children() -- lists:keyfind(ChildId, 1) -- Terminate().
 
 
 replace2(Name, Age, Location, Opts) ->
-    ?pipeline(Opts
-             ,{lists:keyreplace(name, 1, {name, Name}), 3}
-             ,{lists:keyreplace(age, 1, {age, Age}), 3}
-             ,{lists:keyreplace(location, 1, {location, Location}), 3}).
+    Opts --
+    lists:keyreplace(name, 1, ?arg, {name, Name}) --
+    lists:keyreplace(age, 1, ?arg, {age, Age}) --
+    lists:keyreplace(location, 1, ?arg, {location, Location}).
 
 
 timestamp() ->
     {MegaSec, Sec, MicroSec} = os:timestamp(),
-    ?pipeline(MegaSec, {'*', 1000000}, {'+', Sec}, {'*', 1000000}, {'+', MicroSec}, {'div', 1000}).
-
-
-test_case() ->
-    0.1 = ?pipeline(1, {'/', 10}),
-    0.1 = ?pipeline(1, {'/', right, 10}),
-    10.0 = ?pipeline(1, {'/', left, 10}).
+    MegaSec -- (?arg * 1000000) -- (?arg + Sec) -- (?arg * 1000000) -- (?arg + MicroSec) -- (?arg div 1000).
