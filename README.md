@@ -47,13 +47,7 @@ By default result of every expression passes as last argument of next expression
     ```erlang
     %% Example of wrapping timestamp in milli-seconds
     {MegaSec, Sec, MicroSec} = os:timestamp(), 
-    (MegaSec * 1000000) -- 
-    (?arg + Sec) -- 
-    (?arg * 1000000) -- 
-    (?arg + MicroSec) -- 
-    (?arg div 1000).
-    %% In situation like above, if you dont like above syntax, you have to write:
-    %% (((MegaSec * 1000000) + Sec) * 1000000) div 1000
+    (MegaSec * 1000000) -- (?arg + Sec) -- (?arg * 1000000) -- (?arg + MicroSec) -- (?arg div 1000).
     ```
 # Example
 Runnning above codes:
