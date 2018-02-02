@@ -54,7 +54,7 @@ Runnning above codes:
 ```erlang
 -module(test).
 
-%% Don't forget to include pipeline header file for using ?pipeline macro and compile code correctly
+%% Don't forget to include pipeline header file for compiling correctly
 -include_lib("pipeline/include/pipeline.hrl").
 
 
