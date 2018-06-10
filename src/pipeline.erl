@@ -307,8 +307,8 @@ is_argument_call(Expr) ->
                 {?MODULE, {argument, 0}} ->
                     true;
                 _ ->
-                    fasle
+                    false
             end;
         _ ->
-            fasle
+            false
     end.
